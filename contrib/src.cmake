@@ -65,6 +65,11 @@ set (CORE_SOURCES
 	${CORE_PATH}/soloud_thread.cpp
 )
 
+find_package (Threads REQUIRED)
+set (LINK_LIBRARIES
+		${LINK_LIBRARIES}
+		${CMAKE_THREAD_LIBS_INIT}
+	)
 
 # Audiosources
 set (AUDIOSOURCES_PATH ${SOURCE_PATH}/audiosource)
@@ -103,19 +108,25 @@ if (SOLOUD_BACKEND_NULL)
 endif()
 
 if (SOLOUD_BACKEND_SDL2)
-	find_package (SDL2 REQUIRED)
-	include_directories (${SDL2_INCLUDE_DIR})
 	add_definitions (-DWITH_SDL2_STATIC)
-
+	
 	set (BACKENDS_SOURCES
 		${BACKENDS_SOURCES}
 		${BACKENDS_PATH}/sdl2_static/soloud_sdl2_static.cpp
 	)
-
-	set (LINK_LIBRARIES
-		${LINK_LIBRARIES}
-		${SDL2_LIBRARY}
-	)
+	
+	if( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+		add_compile_options( "SHELL:-s USE_SDL=2" )
+		add_compile_options( "SHELL:-s USE_SDL_MIXER=1" )
+	else()
+		find_package (SDL2 REQUIRED)
+		include_directories (${SDL2_INCLUDE_DIR})
+		
+		set (LINK_LIBRARIES
+			${LINK_LIBRARIES}
+			${SDL2_LIBRARY}
+		)
+	endif()
 
 endif()
 
@@ -180,6 +191,44 @@ if (SOLOUD_BACKEND_WASAPI)
 		${BACKENDS_SOURCES}
 		${BACKENDS_PATH}/wasapi/soloud_wasapi.cpp
 	)
+endif()
+
+if (SOLOUD_BACKEND_ALSA)
+	add_definitions (-DWITH_ALSA)
+
+	set (BACKENDS_SOURCES
+		${BACKENDS_SOURCES}
+		${BACKENDS_PATH}/alsa/soloud_alsa.cpp
+	)
+	
+	find_package( ALSA REQUIRED )
+	include_directories (${ALSA_INCLUDE_DIRS})
+	set (LINK_LIBRARIES
+		${LINK_LIBRARIES}
+		${ALSA_LIBRARIES}
+	)
+	
+endif()
+
+if (SOLOUD_BACKEND_OPENAL)
+	add_definitions (-DWITH_OPENAL)
+	add_definitions (-DSOLOUD_STATIC_OPENAL)
+
+	set (BACKENDS_SOURCES
+		${BACKENDS_SOURCES}
+		${BACKENDS_PATH}/openal/soloud_openal.cpp
+		${BACKENDS_PATH}/openal/soloud_openal_dll.c
+	)
+	
+	find_package( OpenAL REQUIRED )
+	include_directories (${OPENAL_INCLUDE_DIR})
+	if (NOT OPENAL_LIBRARY STREQUAL nul)
+		set (LINK_LIBRARIES
+			${LINK_LIBRARIES}
+			${OPENAL_LIBRARY}
+		)
+	endif()
+	
 endif()
 
 # Filters
