@@ -6,7 +6,9 @@ set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 #INCLUDE (StandartIncludes)
 
-cmake_policy( SET CMP0077 NEW )
+if (cmake VERSION_GREATER 3.12)
+	cmake_policy( SET CMP0077 NEW )
+endif ()
 
 include_directories (../include)
 
